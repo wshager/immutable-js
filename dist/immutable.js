@@ -13,6 +13,23 @@
   (global.Immutable = factory());
 }(this, function () { 'use strict';var SLICE$0 = Array.prototype.slice;
 
+  function functionize(value){
+    var y = function($k) {
+        var x = value.get(0);
+      if(x instanceof List){
+          return x.get.apply(x,$k.map(_ => _ -1).toArray());
+      } else if(x instanceof Map) {
+          return x.get.apply(x,$k.toArray());
+      } else if(x instanceof Function) {
+           return x.apply(x,$k.toArray());
+      } else {
+          throw new TypeError("Expected first item in Iterable to be of type List, Map or Function.");
+      }
+    }
+    for(var k in value) y[k] = value[k];
+    return y;
+  }
+
   function createClass(ctor, superClass) {
     if (superClass) {
       ctor.prototype = Object.create(superClass.prototype);
@@ -33,7 +50,7 @@
 
   createClass(IndexedIterable, Iterable);
     function IndexedIterable(value) {
-      return isIndexed(value) ? value : IndexedSeq(value);
+        return functionize(isIndexed(value) ? value : IndexedSeq(value));
     }
 
 
@@ -246,8 +263,8 @@
 
   createClass(Seq, Iterable);
     function Seq(value) {
-      return value === null || value === undefined ? emptySequence() :
-        isIterable(value) ? value.toSeq() : seqFromValue(value);
+      return functionize(value === null || value === undefined ? emptySequence() :
+        isIterable(value) ? value.toSeq() : seqFromValue(value));
     }
 
     Seq.of = function(/*...values*/) {
@@ -383,7 +400,7 @@
       var array = this._array;
       var maxIndex = array.length - 1;
       var ii = 0;
-      return new Iterator(function() 
+      return new Iterator(function()
         {return ii > maxIndex ?
           iteratorDone() :
           iteratorValue(type, ii, array[reverse ? maxIndex - ii++ : ii++])}
@@ -854,7 +871,7 @@
 
     Repeat.prototype.__iterator = function(type, reverse) {var this$0 = this;
       var ii = 0;
-      return new Iterator(function() 
+      return new Iterator(function()
         {return ii < this$0.size ? iteratorValue(type, ii++, this$0._value) : iteratorDone()}
       );
     };
@@ -3052,7 +3069,7 @@
         return flipSequence;
       };
     }
-    reversedSequence.get = function(key, notSetValue) 
+    reversedSequence.get = function(key, notSetValue)
       {return iterable.get(useKeys ? key : -1 - key, notSetValue)};
     reversedSequence.has = function(key )
       {return iterable.has(useKeys ? key : -1 - key)};
@@ -3251,7 +3268,7 @@
         return this.cacheResult().__iterate(fn, reverse);
       }
       var iterations = 0;
-      iterable.__iterate(function(v, k, c) 
+      iterable.__iterate(function(v, k, c)
         {return predicate.call(context, v, k, c) && ++iterations && fn(v, k, this$0)}
       );
       return iterations;
@@ -3442,7 +3459,7 @@
     interposedSequence.size = iterable.size && iterable.size * 2 -1;
     interposedSequence.__iterateUncached = function(fn, reverse) {var this$0 = this;
       var iterations = 0;
-      iterable.__iterate(function(v, k) 
+      iterable.__iterate(function(v, k)
         {return (!iterations || fn(separator, iterations++, this$0) !== false) &&
         fn(v, iterations++, this$0) !== false},
         reverse
